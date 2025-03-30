@@ -1,5 +1,6 @@
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const bcrypt = require('bcrypt');
 const keys = require('../config/keys');
 const path = require('path');
 const fs = require('fs').promises;
@@ -24,13 +25,17 @@ const loadEmployees = async () => {
         const data = await fs.readFile(employeesPath, 'utf8');
         return JSON.parse(data);
     } catch (error) {
-        // If file doesn't exist, create it with empty array
         if (error.code === 'ENOENT') {
             await fs.writeFile(employeesPath, '[]');
             return [];
         }
         throw error;
     }
+};
+
+// Save employees data
+const saveEmployees = async (employees) => {
+    await fs.writeFile(employeesPath, JSON.stringify(employees, null, 2));
 };
 
 // Passport configuration
@@ -48,7 +53,7 @@ passport.deserializeUser(async (email, done) => {
     }
 });
 
-// Set up Google Strategy
+// Set up Google Strategy for admin
 passport.use(new GoogleStrategy({
     clientID: keys.google.clientID,
     clientSecret: keys.google.clientSecret,
@@ -58,14 +63,11 @@ passport.use(new GoogleStrategy({
         const employees = await loadEmployees();
         const existingEmployee = employees.find(emp => emp.email === profile.emails[0].value);
         
-        if (existingEmployee) {
-            // Update access token for future Google Sheets API calls
-            existingEmployee.accessToken = accessToken;
-            await fs.writeFile(employeesPath, JSON.stringify(employees, null, 2));
+        if (existingEmployee && existingEmployee.isAdmin) {
             return done(null, existingEmployee);
         }
         
-        // If employee not found, return null (they need to be added by admin)
+        // If not admin or not found, return null
         done(null, null);
     } catch (error) {
         done(error, null);
@@ -80,9 +82,61 @@ const isAuthenticated = (req, res, next) => {
     res.status(401).json({ success: false, message: 'Not authenticated' });
 };
 
-// Auth routes
+// Admin middleware
+const isAdmin = (req, res, next) => {
+    if (req.isAuthenticated() && req.user.isAdmin) {
+        return next();
+    }
+    res.status(403).json({ success: false, message: 'Admin access required' });
+};
+
+// Setup auth routes
 const setupAuthRoutes = (app) => {
-    // Google OAuth routes
+    // Employee login route
+    app.post('/auth/login', async (req, res) => {
+        try {
+            const { email, password } = req.body;
+            const employees = await loadEmployees();
+            const employee = employees.find(emp => emp.email === email);
+
+            if (!employee || employee.isAdmin) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'Invalid credentials'
+                });
+            }
+
+            const isValidPassword = await bcrypt.compare(password, employee.password);
+            if (!isValidPassword) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'Invalid credentials'
+                });
+            }
+
+            // Log in the employee
+            req.login(employee, (err) => {
+                if (err) {
+                    return res.status(500).json({
+                        success: false,
+                        message: 'Login failed'
+                    });
+                }
+                res.json({
+                    success: true,
+                    message: 'Login successful'
+                });
+            });
+        } catch (error) {
+            console.error('Login error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Login failed'
+            });
+        }
+    });
+
+    // Admin Google OAuth routes
     app.get('/auth/google',
         passport.authenticate('google', {
             scope: [
@@ -97,8 +151,10 @@ const setupAuthRoutes = (app) => {
         passport.authenticate('google', { failureRedirect: '/login' }),
         (req, res) => {
             if (!req.user) {
-                // User's email not in employee list
                 return res.redirect('/unauthorized.html');
+            }
+            if (req.user.isAdmin) {
+                return res.redirect('/admin.html');
             }
             res.redirect('/dashboard.html');
         }
@@ -106,8 +162,9 @@ const setupAuthRoutes = (app) => {
 
     // Logout route
     app.get('/auth/logout', (req, res) => {
-        req.logout();
-        res.redirect('/login.html');
+        req.logout(() => {
+            res.redirect('/login.html');
+        });
     });
 
     // Check auth status
@@ -121,5 +178,6 @@ const setupAuthRoutes = (app) => {
 
 module.exports = {
     setupAuthRoutes,
-    isAuthenticated
+    isAuthenticated,
+    isAdmin
 };
