@@ -1,65 +1,43 @@
-require('dotenv').config();
 const express = require('express');
-const bodyParser = require('body-parser');
-const cookieSession = require('cookie-session');
+const session = require('express-session');
 const passport = require('passport');
-const morgan = require('morgan');
 const path = require('path');
+const { setupAuthRoutes } = require('./controllers/authController');
+const { setupEmployeeRoutes } = require('./controllers/employeeController');
+const { setupSheetRoutes } = require('./controllers/sheetController');
+const { setupHistoryRoutes } = require('./controllers/historyController');
 
-// Initialize Express app
 const app = express();
 
 // Middleware
-app.use(morgan('dev')); // Logging
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static('public'));
 
 // Session configuration
-app.use(cookieSession({
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    keys: [process.env.SESSION_SECRET]
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'your_secure_session_secret',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        secure: false, // set to true in production with HTTPS
+        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    }
 }));
 
 // Initialize Passport and restore authentication state from session
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Serve static files
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Import controllers
-const { setupAuthRoutes } = require('./controllers/authController');
-const { setupEmployeeRoutes } = require('./controllers/employeeController');
-const { setupSheetRoutes } = require('./controllers/sheetController');
-const { setupHistoryRoutes } = require('./controllers/historyController');
-
-// Set up routes
+// Routes
 setupAuthRoutes(app);
 setupEmployeeRoutes(app);
 setupSheetRoutes(app);
 setupHistoryRoutes(app);
 
-// Default route for the root path
+// Default route redirects to login
 app.get('/', (req, res) => {
     res.redirect('/login.html');
-});
-
-// Handle 404
-app.use((req, res) => {
-    res.status(404).json({
-        success: false,
-        message: 'Route not found'
-    });
-});
-
-// Error handling middleware
-app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).json({
-        success: false,
-        message: 'Internal Server Error',
-        error: process.env.NODE_ENV === 'development' ? err.message : undefined
-    });
 });
 
 // Start server
