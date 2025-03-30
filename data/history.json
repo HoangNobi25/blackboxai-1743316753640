@@ -1,0 +1,28 @@
+[
+  {
+    "id": "1",
+    "employeeName": "Test Employee",
+    "employeeEmail": "test@example.com",
+    "sheetId": "1abc2def3ghi4jkl5mno6pqr7stu8vwx9yz",
+    "sheetTitle": "Test Project Budget",
+    "startTime": "2024-01-20T09:00:00.000Z",
+    "endTime": "2024-01-20T10:30:00.000Z",
+    "durationMinutes": 90,
+    "hadModifications": true,
+    "salaryCZK": 375,
+    "recordedAt": "2024-01-20T10:30:00.000Z"
+  },
+  {
+    "id": "2",
+    "employeeName": "Test Employee",
+    "employeeEmail": "test@example.com",
+    "sheetId": "1abc2def3ghi4jkl5mno6pqr7stu8vwx9yz",
+    "sheetTitle": "Test Project Budget",
+    "startTime": "2024-01-20T14:00:00.000Z",
+    "endTime": "2024-01-20T15:00:00.000Z",
+    "durationMinutes": 60,
+    "hadModifications": false,
+    "salaryCZK": 250,
+    "recordedAt": "2024-01-20T15:00:00.000Z"
+  }
+]
