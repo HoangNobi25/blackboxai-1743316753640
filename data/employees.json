@@ -1,10 +1,27 @@
 [
   {
     "id": "1",
+    "name": "Admin User",
+    "email": "admin@company.com",
+    "hourlySalaryCZK": 500,
+    "createdAt": "2024-01-20T00:00:00.000Z",
+    "isAdmin": true
+  },
+  {
+    "id": "2",
     "name": "Test Employee",
-    "email": "test@example.com",
+    "email": "employee@company.com",
+    "password": "$2b$10$1J8Fv5jiTJ4LcrL1HYwhmOfzrs7eeoqNDsVyqD.U4NMY8/2joSAs6",
     "hourlySalaryCZK": 250,
     "createdAt": "2024-01-20T00:00:00.000Z",
-    "accessToken": "test_access_token"
+    "isAdmin": false
+  },
+  {
+    "id": "3",
+    "name": "Hoang Admin",
+    "email": "hoangnb2511@gmail.com",
+    "hourlySalaryCZK": 500,
+    "createdAt": "2024-01-20T00:00:00.000Z",
+    "isAdmin": true
   }
 ]
