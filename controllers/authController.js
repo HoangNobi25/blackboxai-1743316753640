@@ -52,7 +52,7 @@ passport.deserializeUser(async (email, done) => {
 passport.use(new GoogleStrategy({
     clientID: keys.google.clientID,
     clientSecret: keys.google.clientSecret,
-    callbackURL: '/auth/google/callback'
+    callbackURL: 'http://localhost:3000/auth/google/callback'
 }, async (accessToken, refreshToken, profile, done) => {
     try {
         const employees = await loadEmployees();
