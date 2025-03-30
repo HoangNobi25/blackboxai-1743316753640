@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Time Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .active-timer {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .7; }
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <header class="bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center">
+                    <h1 class="text-2xl font-bold text-gray-900">Time Tracker</h1>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div id="userInfo" class="text-right">
+                        <p class="text-sm text-gray-600">Loading...</p>
+                    </div>
+                    <button onclick="logout()" 
+                            class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition duration-300">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Active Session -->
+            <div class="bg-white rounded-xl shadow-sm p-6">
+                <h2 class="text-xl font-semibold mb-4">Active Session</h2>
+                <div id="activeSession" class="space-y-4">
+                    <div id="noActiveSession" class="text-center py-8">
+                        <i class="fas fa-clock text-4xl text-gray-400 mb-3"></i>
+                        <p class="text-gray-600">No active session</p>
+                    </div>
+                    <div id="activeSessionDetails" class="hidden">
+                        <div class="bg-blue-50 rounded-lg p-4 mb-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-blue-600 font-medium" id="activeSheetTitle">Sheet Title</p>
+                                    <p class="text-xs text-blue-500" id="activeSheetId">Sheet ID</p>
+                                </div>
+                                <div class="active-timer bg-blue-100 px-3 py-1 rounded-full">
+                                    <span class="text-blue-600 font-medium" id="activeTimer">00:00:00</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-sm text-gray-600">
+                            <p>Last modification: <span id="lastModification">Never</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sheet Management -->
+            <div class="bg-white rounded-xl shadow-sm p-6">
+                <h2 class="text-xl font-semibold mb-4">Google Sheets</h2>
+                <div class="space-y-4">
+                    <form id="addSheetForm" class="space-y-3">
+                        <div>
+                            <input type="text" 
+                                   id="sheetUrl" 
+                                   placeholder="Enter Google Sheet URL or ID" 
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <button type="submit" 
+                                class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-300">
+                            <i class="fas fa-plus mr-2"></i>Add Sheet
+                        </button>
+                    </form>
+                    <div id="sheetsList" class="space-y-2">
+                        <!-- Sheets will be listed here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- History -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-semibold">History</h2>
+                        <div class="flex gap-2">
+                            <select id="historyFilter" 
+                                    class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm">
+                                <option value="all">All Time</option>
+                                <option value="today">Today</option>
+                                <option value="week">This Week</option>
+                                <option value="month">This Month</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sheet</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Activity</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Salary (CZK)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyTableBody" class="bg-white divide-y divide-gray-200">
+                                <!-- History records will be listed here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summary -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <h2 class="text-xl font-semibold mb-4">Summary</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <p class="text-sm text-gray-600">Total Sessions</p>
+                            <p class="text-2xl font-semibold" id="totalSessions">0</p>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <p class="text-sm text-gray-600">Total Hours</p>
+                            <p class="text-2xl font-semibold" id="totalHours">0</p>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <p class="text-sm text-gray-600">Active Sessions</p>
+                            <p class="text-2xl font-semibold" id="activeSessions">0</p>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <p class="text-sm text-gray-600">Total Salary (CZK)</p>
+                            <p class="text-2xl font-semibold" id="totalSalary">0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="/js/dashboard.js"></script>
+</body>
+</html>
